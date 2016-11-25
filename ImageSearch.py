@@ -86,10 +86,22 @@ def async_images_get_next_item(s):
         return link, end_quote
     else:
         start_line = s.find('rg_meta')
-        start_content = s.find('"ou',start_line+1)
-        end_content = s.find('\\",\\"ow\\',start_content+1)
-        content_raw = str(s[start_content+8:end_content]).replace("\\", "")
-        return content_raw, end_content
+        ou_start = s.find('"ou',start_line+1)
+        start_content = s.find('http', ou_start+1)
+        end_content = s.find('"ow',start_content+1)
+        content_raw = str(s[start_content:end_content-4]).replace("\\", "")
+        if content_raw.lower().find('.jpg') != -1:
+            final_content = str(content_raw[0:content_raw.lower().find('.jpg')+4])
+        elif content_raw.lower().find('.jpeg') != -1:
+            final_content = str(content_raw[0:content_raw.lower().find('.jpeg')+5])
+        elif content_raw.lower().find('.png') != -1:
+            final_content = str(content_raw[0:content_raw.lower().find('.png')+4])
+        elif content_raw.lower().find('.gif') != -1:
+            final_content = str(content_raw[0:content_raw.lower().find('.gif')+4])
+        else:
+            final_content = content_raw
+        print("Hit the Else Statement " + final_content)
+        return final_content, end_content
 
 
 #Getting all links with the help of '_images_get_next_image'
@@ -138,7 +150,7 @@ def get_EIValue(s):
     else:
         start_content = s.find('{kEI:')
         end_content = s.find('kEXPI:',start_content+1)
-        content_raw = str(s[start_content+6:end_content-3])
+        content_raw = str(s[start_content+7:end_content-3])
         return content_raw
 
 def get_VEDvalue(s):
@@ -150,7 +162,7 @@ def get_VEDvalue(s):
     else:
         start_content = s.find('<div id="rg"')
         end_content = s.find('"><div',start_content+1)
-        content_raw = str(s[start_content+22:end_content-2])
+        content_raw = str(s[start_content+23:end_content-2])
         return content_raw
 
 def get_extension(s):
@@ -189,7 +201,7 @@ if args.search is not None:
         scroll_value, start_value, page_value = get_next_google_page(eiValue, scroll_value, start_value, page_value)
         url2='https://www.google.com/search?async=_id:rg_s,_pms:s&ei=' + eiValue + '&espv=2&yv=2&q=' + search + '&start=' + str(q) + '&asearch=ichunk&tbm=isch&vet=' + vetValue + '&ved=' + vedValue + '&ijn=' + str(r)
         raw_html2 =  (download_page(url2))
-        print(raw_html2)
+        #print(raw_html2)
         time.sleep(0.1)
         items = items + (async_images_get_all_items(raw_html2))
         q = q + 100
