@@ -61,7 +61,8 @@ def _images_get_next_item(s):
         start_content = s.find('"ou"',start_line+1)
         end_content = s.find(',"ow"',start_content+1)
         content_raw = str(s[start_content+6:end_content-1])
-        return content_raw, end_content
+        final_content = trim_link(content_raw)
+        return final_content, end_content
 
 
 #Getting all links with the help of '_images_get_next_image'
@@ -90,17 +91,7 @@ def async_images_get_next_item(s):
         start_content = s.find('http', ou_start+1)
         end_content = s.find('"ow',start_content+1)
         content_raw = str(s[start_content:end_content-4]).replace("\\", "")
-        if content_raw.lower().find('.jpg') != -1:
-            final_content = str(content_raw[0:content_raw.lower().find('.jpg')+4])
-        elif content_raw.lower().find('.jpeg') != -1:
-            final_content = str(content_raw[0:content_raw.lower().find('.jpeg')+5])
-        elif content_raw.lower().find('.png') != -1:
-            final_content = str(content_raw[0:content_raw.lower().find('.png')+4])
-        elif content_raw.lower().find('.gif') != -1:
-            final_content = str(content_raw[0:content_raw.lower().find('.gif')+4])
-        else:
-            final_content = content_raw
-        print("Hit the Else Statement " + final_content)
+        final_content = trim_link(content_raw)
         return final_content, end_content
 
 
@@ -171,6 +162,20 @@ def get_extension(s):
     content_raw = str(s[start_content:end_content])
     return content_raw
 
+def trim_link(link):
+    content_raw = link.lower()
+    if content_raw.find('.jpg') != -1:
+        final_content = str(link[0:content_raw.find('.jpg')+4])
+    elif content_raw.find('.jpeg') != -1:
+        final_content = str(link[0:content_raw.find('.jpeg')+5])
+    elif content_raw.find('.png') != -1:
+        final_content = str(link[0:content_raw.find('.png')+4])
+    elif content_raw.find('.gif') != -1:
+        final_content = str(link[0:content_raw.find('.gif')+4])
+    else:
+        final_content = link
+    return final_content
+
 ############## Main Program ############
 
 
@@ -206,7 +211,7 @@ if args.search is not None:
         items = items + (async_images_get_all_items(raw_html2))
         q = q + 100
         r = r + 1
-    #print ("Image Links = "+str(items))
+    print ("Image Links = "+str(items))
     print ("Total Image Links = "+str(len(items)))
     print ("\n")
 
@@ -227,12 +232,13 @@ if args.search is not None:
     k=0
     errorCount=0
     while(k<len(items)):
-        from urllib import Request,urlopen
-        from urllib import URLError, HTTPError
+        import urllib.request 
+        from urllib import error
 
         try:
-            req = Request(items[k], headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.27 Safari/537.17"})
-            response = urlopen(req)
+            #print(items[k])
+            req = urllib.request.Request(items[k], headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.17 (KHTML, like Gecko) Chrome/24.0.1312.27 Safari/537.17"})
+            response = urllib.request.urlopen(req)
             extension = get_extension(items[k])
             output_file = open(str(k+1)+extension,'wb')
             data = response.read()
@@ -249,12 +255,12 @@ if args.search is not None:
             print("IOError on image "+str(k+1))
             k=k+1;
 
-        except HTTPError as e:  #If there is any HTTPError
+        except error.HTTPError as e:  #If there is any HTTPError
 
             errorCount+=1
             print("HTTPError"+str(k))
             k=k+1;
-        except URLError as e:
+        except error.URLError as e:
 
             errorCount+=1
             print("URLError "+str(k))
